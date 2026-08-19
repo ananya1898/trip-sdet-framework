@@ -1,9 +1,13 @@
+
+import pytest
+
+
 def test_get_trips(client):
     response = client.get(client.base_url + "/trips")
     assert response.status_code == 200
     assert isinstance(response.json(), dict)
 
-
+#Positive test case for creating a trip
 def test_create_trip(client):
     trip_data = {
         "destination": "Paris",
@@ -11,7 +15,69 @@ def test_create_trip(client):
     }
     response = client.post(client.base_url + "/trips", json=trip_data)
     assert response.status_code == 200
-    assert response.json()["trip"]["id"] != None
-    assert response.json()["message"] == "Trip created successfully"
-    assert response.json()["trip"]["destination"] == trip_data["destination"]
-    assert response.json()["trip"]["budget"] == trip_data["budget"]
+    data = response.json()
+    assert data["trip"]["id"] is not None
+    assert data["message"] == "Trip created successfully"
+    assert data["trip"]["destination"] == trip_data["destination"]
+    assert data["trip"]["budget"] == trip_data["budget"]
+
+#Business rule valudation for creating a trip with invalid budget values
+@pytest.mark.parametrize("budget", [-100,-1,0])
+def test_create_trip_invalid_data(client,budget):
+    trip_data = {
+        "destination": "Paris",
+        "budget": budget
+    }
+    response = client.post(client.base_url + "/trips", json=trip_data)
+    assert response.status_code == 422  # Unprocessable Entity for invalid data
+
+#Value validation for creating a trip with empty destination
+@pytest.mark.parametrize("destination", ["", "   "])
+def test_create_trip_empty_destination(client,destination):
+    trip_data = {
+        "destination": destination,
+        "budget": 1500.0
+    }
+    response = client.post(client.base_url + "/trips", json=trip_data)
+    assert response.status_code == 422 
+
+#Required field validation for creating a trip with missing fields
+@pytest.mark.parametrize("trip_data", [
+    {"destination": "Paris"},  # Missing budget
+    {"budget": 1500.0}  # Missing destination
+])
+def test_create_trip_missing_fields(client, trip_data):
+    response = client.post(client.base_url + "/trips", json=trip_data)
+    assert response.status_code == 422  
+
+#Type validation for creating a trip with invalid data types
+@pytest.mark.parametrize("trip_data", [
+    {"destination": 123, "budget": 1500.0},  # Invalid destination type
+    {"destination": "Paris", "budget": "not_a_number"}  # Invalid budget type
+])
+def test_create_trip_invalid_types(client, trip_data):
+    response = client.post(client.base_url + "/trips", json=trip_data)
+    assert response.status_code == 422  
+
+#Non existent trip retrieval test case
+def test_get_nonexistent_trip(client):
+    response = client.get(client.base_url + "/trips/99999")  # Assuming 99999 is a non-existent trip ID
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trip not found"
+
+#Non existent trip deletion test case
+def test_delete_nonexistent_trip(client):
+    response = client.delete(client.base_url + "/trips/99999")  # Assuming 99999 is a non-existent trip ID
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trip not found" 
+
+#Non existent trip update test case
+def test_update_nonexistent_trip(client):   
+    updated_trip_data = {
+        "destination": "Updated Destination",
+        "budget": 2000.0
+    }
+    response = client.put(client.base_url + "/trips/99999", json=updated_trip_data)  # Assuming 99999 is a non-existent trip ID
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trip not found"    
+    
