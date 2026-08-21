@@ -82,4 +82,103 @@ def test_update_nonexistent_trip(client):
     response = client.update_trip(99999, updated_trip_data)  # Assuming 99999 is a non-existent trip ID
     assert response.status_code == 404
     assert response.json()["detail"] == "Trip not found"    
-    
+
+def test_create_trip_persists_to_database(client, db_client):
+
+    trip_data = {
+        "destination": "Database Test",
+        "budget": 5000.0
+    }
+
+    response = client.create_trip(trip_data)
+
+    assert response.status_code == 200
+
+    trip_id = response.json()["trip"]["id"]
+
+    query = """
+        SELECT id, destination, budget
+        FROM trips
+        WHERE id = ?
+    """
+
+    result = db_client.execute_query(
+        query,
+        (trip_id,)
+    )
+
+    assert len(result) == 1
+    assert result[0][0] == trip_id
+    assert result[0][1] == trip_data["destination"]
+    assert result[0][2] == trip_data["budget"]
+
+def test_update_trip_persists_to_database(client, db_client):
+
+    trip_data = {
+        "destination": "Delhi",
+        "budget": 5000.0
+    }
+
+    create_response = client.create_trip(trip_data)
+
+    assert create_response.status_code == 200
+
+    trip_id = create_response.json()["trip"]["id"]
+
+    updated_data = {
+        "destination": "Mumbai",
+        "budget": 8000.0
+    }
+
+    update_response = client.update_trip(
+        trip_id,
+        updated_data
+    )
+
+    assert update_response.status_code == 200
+
+    query = """
+        SELECT id, destination, budget
+        FROM trips
+        WHERE id = ?
+    """
+
+    result = db_client.execute_query(
+        query,
+        (trip_id,)
+    )
+
+    assert len(result) == 1
+    assert result[0][0] == trip_id
+    assert result[0][1] == updated_data["destination"]
+    assert result[0][2] == updated_data["budget"]
+
+def test_delete_trip_persists_to_database(client, db_client):
+
+    trip_data = {
+        "destination": "Bangalore",
+        "budget": 6000.0
+    }
+
+    create_response = client.create_trip(trip_data)
+
+    assert create_response.status_code == 200
+
+    trip_id = create_response.json()["trip"]["id"]
+
+    delete_response = client.delete_trip(trip_id)
+
+    assert delete_response.status_code == 200
+
+    query = """
+        SELECT id
+        FROM trips
+        WHERE id = ?
+    """
+
+    result = db_client.execute_query(
+        query,
+        (trip_id,)
+    )
+
+    assert len(result) == 0  
