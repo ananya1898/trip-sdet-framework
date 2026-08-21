@@ -3,7 +3,7 @@ import pytest
 
 
 def test_get_trips(client):
-    response = client.get(client.base_url + "/trips")
+    response = client.get_trips()
     assert response.status_code == 200
     assert isinstance(response.json(), dict)
 
@@ -13,7 +13,9 @@ def test_create_trip(client):
         "destination": "Paris",
         "budget": 1500.0
     }
-    response = client.post(client.base_url + "/trips", json=trip_data)
+
+    response = client.create_trip(trip_data)  
+
     assert response.status_code == 200
     data = response.json()
     assert data["trip"]["id"] is not None
@@ -28,7 +30,7 @@ def test_create_trip_invalid_data(client,budget):
         "destination": "Paris",
         "budget": budget
     }
-    response = client.post(client.base_url + "/trips", json=trip_data)
+    response = client.create_trip(trip_data)
     assert response.status_code == 422  # Unprocessable Entity for invalid data
 
 #Value validation for creating a trip with empty destination
@@ -38,7 +40,7 @@ def test_create_trip_empty_destination(client,destination):
         "destination": destination,
         "budget": 1500.0
     }
-    response = client.post(client.base_url + "/trips", json=trip_data)
+    response = client.create_trip(trip_data)
     assert response.status_code == 422 
 
 #Required field validation for creating a trip with missing fields
@@ -47,7 +49,7 @@ def test_create_trip_empty_destination(client,destination):
     {"budget": 1500.0}  # Missing destination
 ])
 def test_create_trip_missing_fields(client, trip_data):
-    response = client.post(client.base_url + "/trips", json=trip_data)
+    response = client.create_trip(trip_data)
     assert response.status_code == 422  
 
 #Type validation for creating a trip with invalid data types
@@ -56,18 +58,18 @@ def test_create_trip_missing_fields(client, trip_data):
     {"destination": "Paris", "budget": "not_a_number"}  # Invalid budget type
 ])
 def test_create_trip_invalid_types(client, trip_data):
-    response = client.post(client.base_url + "/trips", json=trip_data)
+    response = client.create_trip(trip_data)
     assert response.status_code == 422  
 
 #Non existent trip retrieval test case
 def test_get_nonexistent_trip(client):
-    response = client.get(client.base_url + "/trips/99999")  # Assuming 99999 is a non-existent trip ID
+    response = client.get_trip(99999)  # Assuming 99999 is a non-existent trip ID
     assert response.status_code == 404
     assert response.json()["detail"] == "Trip not found"
 
 #Non existent trip deletion test case
 def test_delete_nonexistent_trip(client):
-    response = client.delete(client.base_url + "/trips/99999")  # Assuming 99999 is a non-existent trip ID
+    response = client.delete_trip(99999)  # Assuming 99999 is a non-existent trip ID
     assert response.status_code == 404
     assert response.json()["detail"] == "Trip not found" 
 
@@ -77,7 +79,7 @@ def test_update_nonexistent_trip(client):
         "destination": "Updated Destination",
         "budget": 2000.0
     }
-    response = client.put(client.base_url + "/trips/99999", json=updated_trip_data)  # Assuming 99999 is a non-existent trip ID
+    response = client.update_trip(99999, updated_trip_data)  # Assuming 99999 is a non-existent trip ID
     assert response.status_code == 404
     assert response.json()["detail"] == "Trip not found"    
     

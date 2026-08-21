@@ -1,8 +1,8 @@
 import pytest
-import requests
+
+from framework.api.clients.trip_client import TripClient
+
 
 @pytest.fixture
 def client():
-    session = requests.Session()
-    session.base_url = "http://localhost:8000"  # Replace with your API base URL
-    return session 
+    return TripClient("http://localhost:8000")
