@@ -15,3 +15,13 @@ class DatabaseClient:
             return cursor.fetchall()
         finally:
             connection.close()
+
+    def execute_update(self, query, parameters=()):
+        connection = sqlite3.connect(self.database_path)
+
+        try:
+            cursor = connection.cursor()
+            cursor.execute(query, parameters)
+            connection.commit()
+        finally:
+            connection.close()

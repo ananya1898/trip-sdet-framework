@@ -1,5 +1,6 @@
 
 import pytest
+from test_data.trip_data import VALID_TRIPS, INVALID_BUDGETS, INVALID_DESTINATIONS
 
 #Postive test case for retrieving trips
 @pytest.mark.smoke
@@ -10,7 +11,7 @@ def test_get_trips(trip_client):
 
 #Positive test case for retrieving a specific trip
 @pytest.mark.smoke  
-def test_get_trip(trip_client):
+def test_get_trip(trip_client,created_trip_cleanup):
     trip_data = {
         "destination": "New York",
         "budget": 2000.0
@@ -21,6 +22,7 @@ def test_get_trip(trip_client):
     assert create_response.status_code == 200
 
     trip_id = create_response.json()["trip"]["id"]
+    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
 
     get_response = trip_client.get_trip(trip_id)
 
@@ -30,36 +32,42 @@ def test_get_trip(trip_client):
     assert data["trip"]["destination"] == trip_data["destination"]
     assert data["trip"]["budget"] == trip_data["budget"]
 
+
 #Positive test case for creating a trip
 @pytest.mark.smoke
-def test_create_trip(trip_client):
-    trip_data = {
-        "destination": "Paris",
-        "budget": 1500.0
-    }
+@pytest.mark.parametrize("trip_data", VALID_TRIPS)
+def test_create_trip(trip_client,trip_data,created_trip_cleanup):
 
     response = trip_client.create_trip(trip_data)  
 
     assert response.status_code == 200
     data = response.json()
+
+    #Cleanup: Add the created trip ID to the cleanup list for deletion after the test
+    trip_id = data["trip"]["id"]
+    created_trip_cleanup.append(trip_id)   
+ 
     assert data["trip"]["id"] is not None
     assert data["message"] == "Trip created successfully"
     assert data["trip"]["destination"] == trip_data["destination"]
     assert data["trip"]["budget"] == trip_data["budget"]
 
+
+
 #Business rule valudation for creating a trip with invalid budget values
-@pytest.mark.parametrize("budget", [-100,-1,0])
+@pytest.mark.parametrize("budget", INVALID_BUDGETS)
 @pytest.mark.regression
-def test_create_trip_invalid_data(trip_client,budget):
+def test_create_trip_invalid_budget(trip_client,budget):
     trip_data = {
         "destination": "Paris",
         "budget": budget
     }
     response = trip_client.create_trip(trip_data)
-    assert response.status_code == 422  # Unprocessable Entity for invalid data
+
+    assert response.status_code == 422
 
 #Value validation for creating a trip with empty destination
-@pytest.mark.parametrize("destination", ["", "   "])
+@pytest.mark.parametrize("destination", INVALID_DESTINATIONS)
 @pytest.mark.regression 
 def test_create_trip_empty_destination(trip_client,destination):
     trip_data = {
@@ -114,8 +122,8 @@ def test_update_nonexistent_trip(trip_client):
     assert response.status_code == 404
     assert response.json()["detail"] == "Trip not found"    
 
-@pytest.mark.smoke
-def test_create_trip_persists_to_database(trip_client, db_client):
+@pytest.mark.regression
+def test_create_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
 
     trip_data = {
         "destination": "Database Test",
@@ -127,6 +135,8 @@ def test_create_trip_persists_to_database(trip_client, db_client):
     assert response.status_code == 200
 
     trip_id = response.json()["trip"]["id"]
+    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
+
 
     query = """
         SELECT id, destination, budget
@@ -144,8 +154,9 @@ def test_create_trip_persists_to_database(trip_client, db_client):
     assert result[0][1] == trip_data["destination"]
     assert result[0][2] == trip_data["budget"]
 
-@pytest.mark.smoke
-def test_update_trip_persists_to_database(trip_client, db_client):
+
+@pytest.mark.regression
+def test_update_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
 
     trip_data = {
         "destination": "Delhi",
@@ -170,6 +181,9 @@ def test_update_trip_persists_to_database(trip_client, db_client):
 
     assert update_response.status_code == 200
 
+    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
+
+
     query = """
         SELECT id, destination, budget
         FROM trips
@@ -186,8 +200,9 @@ def test_update_trip_persists_to_database(trip_client, db_client):
     assert result[0][1] == updated_data["destination"]
     assert result[0][2] == updated_data["budget"]
 
-@pytest.mark.smoke
-def test_delete_trip_persists_to_database(trip_client, db_client):
+
+@pytest.mark.regression
+def test_delete_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
 
     trip_data = {
         "destination": "Bangalore",
@@ -199,6 +214,8 @@ def test_delete_trip_persists_to_database(trip_client, db_client):
     assert create_response.status_code == 200
 
     trip_id = create_response.json()["trip"]["id"]
+    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
+
 
     delete_response = trip_client.delete_trip(trip_id)
 
