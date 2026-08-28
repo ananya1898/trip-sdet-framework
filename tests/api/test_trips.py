@@ -1,6 +1,8 @@
 
 import pytest
 from test_data.trip_data import VALID_TRIPS, INVALID_BUDGETS, INVALID_DESTINATIONS
+from framework.assertions.trip_assertions import assert_trip
+from framework.schemas.trip_schema import TripResponse, GetTripResponse
 
 #Postive test case for retrieving trips
 @pytest.mark.smoke
@@ -11,27 +13,13 @@ def test_get_trips(trip_client):
 
 #Positive test case for retrieving a specific trip
 @pytest.mark.smoke  
-def test_get_trip(trip_client,created_trip_cleanup):
-    trip_data = {
-        "destination": "New York",
-        "budget": 2000.0
-    }
-
-    create_response = trip_client.create_trip(trip_data)
-
-    assert create_response.status_code == 200
-
-    trip_id = create_response.json()["trip"]["id"]
-    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
-
-    get_response = trip_client.get_trip(trip_id)
-
-    assert get_response.status_code == 200
-    data = get_response.json()
-    assert data["trip"]["id"] == trip_id
-    assert data["trip"]["destination"] == trip_data["destination"]
-    assert data["trip"]["budget"] == trip_data["budget"]
-
+def test_get_trip(trip_client, existing_trip):
+    trip_id = existing_trip["id"]
+    response = trip_client.get_trip(trip_id)
+    data = response.json()
+    assert response.status_code == 200
+    trip_response = GetTripResponse.model_validate(data)
+    assert_trip(trip_response, existing_trip)
 
 #Positive test case for creating a trip
 @pytest.mark.smoke
@@ -42,15 +30,14 @@ def test_create_trip(trip_client,trip_data,created_trip_cleanup):
 
     assert response.status_code == 200
     data = response.json()
+    trip_response = TripResponse.model_validate(data)
 
     #Cleanup: Add the created trip ID to the cleanup list for deletion after the test
     trip_id = data["trip"]["id"]
     created_trip_cleanup.append(trip_id)   
- 
-    assert data["trip"]["id"] is not None
-    assert data["message"] == "Trip created successfully"
-    assert data["trip"]["destination"] == trip_data["destination"]
-    assert data["trip"]["budget"] == trip_data["budget"]
+
+    assert_trip(trip_response,data["trip"])
+    assert trip_response.message == "Trip created successfully"
 
 
 
@@ -123,20 +110,13 @@ def test_update_nonexistent_trip(trip_client):
     assert response.json()["detail"] == "Trip not found"    
 
 @pytest.mark.regression
-def test_create_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
+def test_create_trip_persists_to_database(trip_client, db_client, existing_trip):
 
-    trip_data = {
-        "destination": "Database Test",
-        "budget": 5000.0
-    }
+    trip_id = existing_trip["id"]
 
-    response = trip_client.create_trip(trip_data)
+    response = trip_client.get_trip(trip_id)
 
     assert response.status_code == 200
-
-    trip_id = response.json()["trip"]["id"]
-    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
-
 
     query = """
         SELECT id, destination, budget
@@ -151,71 +131,44 @@ def test_create_trip_persists_to_database(trip_client, db_client, created_trip_c
 
     assert len(result) == 1
     assert result[0][0] == trip_id
-    assert result[0][1] == trip_data["destination"]
-    assert result[0][2] == trip_data["budget"]
+    assert result[0][1] == existing_trip["destination"]
+    assert result[0][2] == existing_trip["budget"]
 
 
 @pytest.mark.regression
-def test_update_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
+def test_update_trip_persists_to_database(trip_client, db_client, existing_trip):
 
-    trip_data = {
-        "destination": "Delhi",
-        "budget": 5000.0
-    }
-
-    create_response = trip_client.create_trip(trip_data)
-
-    assert create_response.status_code == 200
-
-    trip_id = create_response.json()["trip"]["id"]
+    trip_id = existing_trip["id"]
 
     updated_data = {
         "destination": "Mumbai",
-        "budget": 8000.0
+        "budget": 5000.0
     }
-
-    update_response = trip_client.update_trip(
-        trip_id,
-        updated_data
-    )
-
+    
+    update_response = trip_client.update_trip(trip_id, updated_data)
+    
     assert update_response.status_code == 200
-
-    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
-
-
+    
     query = """
         SELECT id, destination, budget
         FROM trips
         WHERE id = ?
     """
-
+    
     result = db_client.execute_query(
         query,
         (trip_id,)
     )
-
+    
     assert len(result) == 1
     assert result[0][0] == trip_id
     assert result[0][1] == updated_data["destination"]
     assert result[0][2] == updated_data["budget"]
 
-
 @pytest.mark.regression
-def test_delete_trip_persists_to_database(trip_client, db_client, created_trip_cleanup):
+def test_delete_trip_persists_to_database(trip_client, db_client, existing_trip):
 
-    trip_data = {
-        "destination": "Bangalore",
-        "budget": 6000.0
-    }
-
-    create_response = trip_client.create_trip(trip_data)
-
-    assert create_response.status_code == 200
-
-    trip_id = create_response.json()["trip"]["id"]
-    created_trip_cleanup.append(trip_id)  # Cleanup: Add the created trip ID to the cleanup list for deletion after the test
-
+    trip_id = existing_trip["id"]
 
     delete_response = trip_client.delete_trip(trip_id)
 

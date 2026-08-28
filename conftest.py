@@ -33,3 +33,20 @@ def created_trip_cleanup(db_client):
             (trip_id,)
         )
         logger.info(f"Deleted trip with ID: {trip_id} from the database.")
+
+@pytest.fixture
+def existing_trip(trip_client, created_trip_cleanup):
+    trip_data = {
+        "destination": "Test Destination",
+        "budget": 5000.0
+    }
+
+    response = trip_client.create_trip(trip_data)
+
+    assert response.status_code == 200
+
+    trip = response.json()["trip"]
+
+    created_trip_cleanup.append(trip["id"])
+
+    return trip
