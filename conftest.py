@@ -2,6 +2,7 @@
 import pytest
 
 from framework.api.clients.trip_client import TripClient
+from framework.config.config import DATABASE_PATH
 from framework.database.db_client import DatabaseClient
 from framework.utils.logger import get_logger
 
@@ -17,9 +18,7 @@ def trip_client(base_url):
 
 @pytest.fixture
 def db_client():
-    return DatabaseClient(
-        r"D:\Projects\tripmate\tripmate.db"
-    )
+    return DatabaseClient(DATABASE_PATH)
 
 @pytest.fixture
 def created_trip_cleanup(db_client):
