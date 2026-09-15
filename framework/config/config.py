@@ -1,20 +1,8 @@
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-)
+load_dotenv()
 
-TRIPMATE_PATH = os.path.join(
-    os.path.dirname(BASE_DIR),
-    "tripmate"
-)
-
-DATABASE_PATH = os.path.join(
-    TRIPMATE_PATH,
-    "tripmate.db"
-)
 
 ENVIRONMENT = os.getenv("TEST_ENV", "local")
 
@@ -28,3 +16,9 @@ if not BASE_URL:
     raise ValueError(
         f"Unsupported test environment: {ENVIRONMENT}"
     )
+
+
+DATABASE_PATH = os.getenv(
+    "TRIPMATE_DB_PATH",
+    "tripmate.db"
+)

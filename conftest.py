@@ -5,6 +5,7 @@ from framework.api.clients.trip_client import TripClient
 from framework.config.config import DATABASE_PATH
 from framework.database.db_client import DatabaseClient
 from framework.utils.logger import get_logger
+from framework.database.trip_repository import TripRepository
 
 logger = get_logger(__name__)
 
@@ -49,3 +50,7 @@ def existing_trip(trip_client, created_trip_cleanup):
     created_trip_cleanup.append(trip["id"])
 
     return trip
+
+@pytest.fixture
+def trip_repository(db_client):
+    return TripRepository(db_client)
