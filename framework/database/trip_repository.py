@@ -42,3 +42,13 @@ class TripRepository:
         )
 
         return len(result) > 0
+    def delete_trip(self, trip_id):
+        query = """
+            DELETE FROM trips
+            WHERE id = ?
+        """
+
+        self.db_client.execute_update(
+            query,
+            (trip_id,)
+    )
