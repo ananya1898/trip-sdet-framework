@@ -14,6 +14,7 @@ jobs:
 
     env:
       TEST_ENV: local
+      LOCAL_BASE_URL: http://127.0.0.1:8000
       TRIPMATE_DB_PATH: ../tripmate/tripmate.db
 
     steps:
