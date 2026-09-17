@@ -25,7 +25,8 @@ jobs:
       - name: Checkout TripMate application
         uses: actions/checkout@v4
         with:
-          repository: ananya1898/tripmate.git
+          repository: ananya1898/tripmate
+          ref: main
           path: tripmate
 
       - name: Set up Python
