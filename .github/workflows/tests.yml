@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      TEST_ENV: local
+      TRIPMATE_DB_PATH: ../tripmate/tripmate.db
+
     steps:
       - name: Checkout test framework
         uses: actions/checkout@v4

@@ -20,6 +20,10 @@ if not BASE_URL:
 
 
 DATABASE_PATH = os.getenv(
-    "TRIPMATE_DB_PATH",
-    "tripmate.db"
+    "TRIPMATE_DB_PATH"
 )
+
+if not DATABASE_PATH:
+    raise ValueError(
+        "TRIPMATE_DB_PATH is not configured"
+    )
