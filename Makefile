@@ -6,6 +6,3 @@ smoke:
 
 regression:
 	pytest -m regression -v --html=reports/regression-report.html --self-contained-html
-
-report:
-	pytest -v --html=reports/report.html --self-contained-html
