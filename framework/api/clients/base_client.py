@@ -1,5 +1,3 @@
-#Generic HTTP behavior
-
 import requests
 from framework.utils.logger import get_logger
 
@@ -12,31 +10,65 @@ class BaseClient:
         self.base_url = base_url
 
     def get(self, endpoint):
-        logger.info(f"Sending GET request to {self.base_url + endpoint}")
-        response = requests.get(self.base_url + endpoint)
-        logger.info(f"GET request response: {response.status_code}")
+        url = self.base_url + endpoint
+        logger.info(f"Sending GET request to {url}")
+
+        response = requests.get(url)
+
+        logger.info(
+            f"GET response: {response.status_code} | "
+            f"Body: {response.text}"
+        )
+
         return response
 
     def post(self, endpoint, json=None):
-        logger.info(f"Sending POST request to {self.base_url + endpoint}")                  
+        url = self.base_url + endpoint
+        logger.info(
+            f"Sending POST request to {url} | "
+            f"Payload: {json}"
+        )
+
         response = requests.post(
-            self.base_url + endpoint,
+            url,
             json=json
         )
-        logger.info(f"POST request response: {response.status_code}")
+
+        logger.info(
+            f"POST response: {response.status_code} | "
+            f"Body: {response.text}"
+        )
+
         return response
 
     def put(self, endpoint, json=None):
-        logger.info(f"Sending PUT request to {self.base_url + endpoint}")
+        url = self.base_url + endpoint
+        logger.info(
+            f"Sending PUT request to {url} | "
+            f"Payload: {json}"
+        )
+
         response = requests.put(
-            self.base_url + endpoint,
+            url,
             json=json
         )
-        logger.info(f"PUT request response: {response.status_code}")
+
+        logger.info(
+            f"PUT response: {response.status_code} | "
+            f"Body: {response.text}"
+        )
+
         return response
 
     def delete(self, endpoint):
-        logger.info(f"Sending DELETE request to {self.base_url + endpoint}")
-        response = requests.delete(self.base_url + endpoint)
-        logger.info(f"DELETE request response: {response.status_code}")
+        url = self.base_url + endpoint
+        logger.info(f"Sending DELETE request to {url}")
+
+        response = requests.delete(url)
+
+        logger.info(
+            f"DELETE response: {response.status_code} | "
+            f"Body: {response.text}"
+        )
+
         return response

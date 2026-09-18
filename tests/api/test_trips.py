@@ -11,7 +11,7 @@ from test_data.trip_data import (
     INVALID_TRIP_UPDATE,
     DATABASE_UPDATE_TRIP
 )
-from framework.assertions.trip_assertions import assert_trip
+from framework.assertions.trip_assertions import assert_trip, assert_trip_matches_request
 from framework.schemas.trip_schema import TripResponse, GetTripResponse
 
 #Postive test case for retrieving trips
@@ -46,7 +46,7 @@ def test_create_trip(trip_client,trip_data,created_trip_cleanup):
     trip_id = data["trip"]["id"]
     created_trip_cleanup.append(trip_id)   
 
-    assert_trip(trip_response,data["trip"])
+    assert_trip_matches_request(trip_response, trip_data)
     assert trip_response.message == "Trip created successfully"
 
 
